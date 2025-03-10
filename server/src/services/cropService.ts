@@ -3,7 +3,7 @@ import { CropData, ICropData } from '../models/CropData';
 import { User } from '../models/User';
 import { processAndUploadImage } from '../utils/imageProcessor';
 import { analyzeImageWithAI } from './aiService';
-import { notificationService } from './notificationService';
+//import { notificationService } from './notificationService';
 
 // Types
 interface CreateCropInput {
@@ -86,7 +86,7 @@ class CropService {
       await user.save();
     }
 
-    await this.notifyNewCrop(crop);
+    //await this.notifyNewCrop(crop);
     return crop;
   }
 
@@ -134,11 +134,11 @@ class CropService {
       crop.healthStatus.issues.push(...newIssues);
 
       // Notify about serious issues
-      for (const issue of newIssues) {
-        if (issue.severity === 'high') {
-          await this.notifyHealthIssue(crop, issue);
-        }
-      }
+      // for (const issue of newIssues) {
+      //   if (issue.severity === 'high') {
+      //     await this.notifyHealthIssue(crop, issue);
+      //   }
+      // }
     }
 
     // Update recommendations
@@ -247,30 +247,30 @@ class CropService {
     }).sort({ nextInspectionDue: 1 });
   }
 
-  // Private notification methods
-  private async notifyNewCrop(crop: ICropData): Promise<void> {
-    await notificationService.createNotification({
-      userId: crop.userId.toString(),
-      title: 'New Crop Registered',
-      message: `${crop.cropName} has been registered. Initial setup tasks have been added.`,
-      type: 'info',
-      category: 'crop',
-      priority: 'medium',
-      relatedEntityId: crop.userId.toString()
-    });
-  }
+  // // Private notification methods
+  // private async notifyNewCrop(crop: ICropData): Promise<void> {
+  //   await notificationService.createNotification({
+  //     userId: crop.userId.toString(),
+  //     title: 'New Crop Registered',
+  //     message: `${crop.cropName} has been registered. Initial setup tasks have been added.`,
+  //     type: 'info',
+  //     category: 'crop',
+  //     priority: 'medium',
+  //     relatedEntityId: crop.userId.toString()
+  //   });
+  // }
 
-  private async notifyHealthIssue(crop: ICropData, issue: any): Promise<void> {
-    await notificationService.createNotification({
-      userId: crop.userId.toString(),
-      title: `Health Issue Detected: ${crop.cropName}`,
-      message: `${issue.name} detected with ${issue.severity} severity. Immediate attention recommended.`,
-      type: 'alert',
-      category: 'health',
-      priority: 'high',
-      relatedEntityId: crop.userId.toString()
-    });
-  }
+  // private async notifyHealthIssue(crop: ICropData, issue: any): Promise<void> {
+  //   await notificationService.createNotification({
+  //     userId: crop.userId.toString(),
+  //     title: `Health Issue Detected: ${crop.cropName}`,
+  //     message: `${issue.name} detected with ${issue.severity} severity. Immediate attention recommended.`,
+  //     type: 'alert',
+  //     category: 'health',
+  //     priority: 'high',
+  //     relatedEntityId: crop.userId.toString()
+  //   });
+  // }
 }
 
 export const cropService = new CropService();

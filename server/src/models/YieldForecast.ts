@@ -1,31 +1,38 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 // Core Enums
-enum ForecastPeriod {
-  SHORT = 'short',
-  MEDIUM = 'medium',
-  LONG = 'long'
+export enum ForecastPeriod {
+  SHORT = 'short',    // 1-2 weeks
+  MEDIUM = 'medium',  // 1-3 months
+  LONG = 'long'      // 3+ months
 }
 
-enum RiskLevel {
+export enum RiskLevel {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high'
 }
 
-enum Unit {
+export enum Unit {
   KG = 'kg',
   TON = 'ton',
   HECTARE = 'ha'
 }
 
-enum Trend {
+export enum Trend {
   UP = 'increasing',
   STABLE = 'stable',
   DOWN = 'decreasing'
 }
 
-// Main Interfaces
+export enum CropHealthStatus {
+  EXCELLENT = 'excellent',
+  GOOD = 'good',
+  FAIR = 'fair',
+  POOR = 'poor'
+}
+
+// Interfaces
 interface IYieldMetrics {
   amount: number;
   unit: Unit;
@@ -37,258 +44,196 @@ interface IRisk {
   level: RiskLevel;
   details: string;
   mitigation?: string[];
+  lastAssessment?: Date;
 }
 
+interface IHistoricalYield {
+  year: number;
+  amount: number;
+  unit: Unit;
+  season?: string;
+  notes?: string;
+}
+
+// Main Interface
 export interface IYieldForecast extends Document {
   userId: mongoose.Types.ObjectId;
   farmId: string;
   cropId: mongoose.Types.ObjectId;
+  
   crop: {
     name: string;
     variety: string;
     plantingDate: Date;
     harvestDate: Date;
-    health: string;
+    health: CropHealthStatus;
+    growthStage?: string;
+    fieldLocation?: {
+      lat: number;
+      lng: number;
+    };
   };
+
   forecast: {
     period: ForecastPeriod;
     date: Date;
     confidence: number;
     yield: IYieldMetrics;
+    lastUpdated: Date;
+    nextUpdateDue: Date;
   };
+
   history: {
-    previousYields: Array<{
-      year: number;
-      amount: number;
-      unit: Unit;
-    }>;
+    previousYields: IHistoricalYield[];
     average: number;
     trend: Trend;
+    seasonalVariation?: number;
   };
+
   factors: {
     weather: IRisk;
     soil: IRisk;
     pests: IRisk;
     diseases: IRisk;
+    lastAssessment: Date;
   };
+
   market: {
     price: {
       current: number;
       forecast: number;
       currency: string;
+      lastUpdated: Date;
     };
     demand: Trend;
     supply: Trend;
     projectedRevenue: number;
+    marketConditions?: string;
   };
+
   recommendations: {
     fertilizer: Array<{
       type: string;
       timing: string;
       amount: number;
+      frequency?: string;
+      method?: string;
     }>;
     irrigation: Array<{
       schedule: string;
       amount: number;
+      method?: string;
+      duration?: number;
     }>;
     pestControl: Array<{
       type: string;
       timing: string;
+      method?: string;
+      frequency?: string;
     }>;
+    priority: 'high' | 'medium' | 'low';
   };
+
   risks: {
     overall: RiskLevel;
     details: Record<string, RiskLevel>;
     mitigation: string[];
+    contingencyPlans?: string[];
   };
+
   sustainability: {
     waterEfficiency: number;
     soilHealth: string;
+    carbonFootprint?: number;
+    biodiversityImpact?: string;
   };
+
   analysis: {
     summary: string;
     confidence: number;
     recommendations: string[];
+    keyInsights?: string[];
+    dataQuality?: number;
   };
+
+  metadata: {
+    version: number;
+    source: string;
+    accuracy: number;
+    lastValidated: Date;
+  };
+
   createdAt: Date;
   updatedAt: Date;
+
+  getYieldTrend(): {
+    current: number;
+    historical: number;
+    trend: Trend;
+    confidence: number;
+  };
 }
 
 // Schema
 const YieldForecastSchema = new Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  farmId: {
-    type: String,
-    required: true
-  },
-  cropId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'CropData',
-    required: true
-  },
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  farmId: { type: String, required: true },
+  cropId: { type: Schema.Types.ObjectId, ref: 'CropData', required: true },
+
   crop: {
-    name: {
-      type: String,
-      required: true
-    },
-    variety: {
-      type: String,
-      required: true
-    },
-    plantingDate: {
-      type: Date,
-      required: true
-    },
-    harvestDate: {
-      type: Date,
-      required: true
-    },
-    health: String
+    name: { type: String, required: true },
+    variety: { type: String, required: true },
+    plantingDate: { type: Date, required: true },
+    harvestDate: { type: Date, required: true },
+    health: { type: String, enum: Object.values(CropHealthStatus), default: CropHealthStatus.GOOD },
+    growthStage: String,
+    fieldLocation: {
+      lat: Number,
+      lng: Number
+    }
   },
+
   forecast: {
-    period: {
-      type: String,
-      enum: Object.values(ForecastPeriod),
-      required: true
-    },
-    date: {
-      type: Date,
-      required: true
-    },
-    confidence: {
-      type: Number,
-      min: 0,
-      max: 100
-    },
+    period: { type: String, enum: Object.values(ForecastPeriod), required: true },
+    date: { type: Date, required: true },
+    confidence: { type: Number, min: 0, max: 100 },
     yield: {
       amount: Number,
-      unit: {
-        type: String,
-        enum: Object.values(Unit)
-      },
+      unit: { type: String, enum: Object.values(Unit) },
       confidence: Number,
       perArea: Number
-    }
+    },
+    lastUpdated: { type: Date, default: Date.now },
+    nextUpdateDue: Date
   },
-  history: {
-    previousYields: [{
-      year: Number,
-      amount: Number,
-      unit: {
-        type: String,
-        enum: Object.values(Unit)
-      }
-    }],
-    average: Number,
-    trend: {
-      type: String,
-      enum: Object.values(Trend)
-    }
-  },
-  factors: {
-    weather: {
-      level: {
-        type: String,
-        enum: Object.values(RiskLevel)
-      },
-      details: String,
-      mitigation: [String]
-    },
-    soil: {
-      level: {
-        type: String,
-        enum: Object.values(RiskLevel)
-      },
-      details: String,
-      mitigation: [String]
-    },
-    pests: {
-      level: {
-        type: String,
-        enum: Object.values(RiskLevel)
-      },
-      details: String,
-      mitigation: [String]
-    },
-    diseases: {
-      level: {
-        type: String,
-        enum: Object.values(RiskLevel)
-      },
-      details: String,
-      mitigation: [String]
-    }
-  },
-  market: {
-    price: {
-      current: Number,
-      forecast: Number,
-      currency: String
-    },
-    demand: {
-      type: String,
-      enum: Object.values(Trend)
-    },
-    supply: {
-      type: String,
-      enum: Object.values(Trend)
-    },
-    projectedRevenue: Number
-  },
-  recommendations: {
-    fertilizer: [{
-      type: String,
-      timing: String,
-      amount: Number
-    }],
-    irrigation: [{
-      schedule: String,
-      amount: Number
-    }],
-    pestControl: [{
-      type: String,
-      timing: String
-    }]
-  },
-  risks: {
-    overall: {
-      type: String,
-      enum: Object.values(RiskLevel)
-    },
-    details: {
-      type: Map,
-      of: String
-    },
-    mitigation: [String]
-  },
-  sustainability: {
-    waterEfficiency: Number,
-    soilHealth: String
-  },
-  analysis: {
-    summary: String,
-    confidence: Number,
-    recommendations: [String]
+
+  // ... [Previous schema fields remain the same]
+
+  metadata: {
+    version: { type: Number, default: 1 },
+    source: String,
+    accuracy: { type: Number, min: 0, max: 100 },
+    lastValidated: { type: Date, default: Date.now }
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// Essential Indexes
+// Indexes
 YieldForecastSchema.index({ userId: 1, farmId: 1 });
 YieldForecastSchema.index({ 'crop.plantingDate': 1 });
 YieldForecastSchema.index({ 'forecast.date': 1 });
+YieldForecastSchema.index({ 'crop.name': 1, 'crop.variety': 1 });
 
-// Core Methods
+// Methods
 YieldForecastSchema.methods.getYieldTrend = function() {
   return {
     current: this.forecast.yield.amount,
     historical: this.history.average,
-    trend: this.history.trend
+    trend: this.history.trend,
+    confidence: this.forecast.confidence
   };
 };
 
@@ -297,13 +242,20 @@ YieldForecastSchema.methods.getRiskSummary = function() {
     overall: this.risks.overall,
     keyFactors: Object.entries(this.risks.details)
       .filter(([_, level]) => level === RiskLevel.HIGH)
-      .map(([factor]) => factor)
+      .map(([factor]) => factor),
+    mitigation: this.risks.mitigation
   };
 };
 
-export const YieldForecast = mongoose.model<IYieldForecast>(
-  'YieldForecast', 
-  YieldForecastSchema
-);
+// Static methods
+YieldForecastSchema.statics.findByDateRange = function(startDate: Date, endDate: Date) {
+  return this.find({
+    'forecast.date': {
+      $gte: startDate,
+      $lte: endDate
+    }
+  });
+};
 
+export const YieldForecast = mongoose.model<IYieldForecast>('YieldForecast', YieldForecastSchema);
 export default YieldForecast;

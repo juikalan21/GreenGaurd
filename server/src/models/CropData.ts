@@ -83,6 +83,7 @@ export interface ICropData extends Document {
   nextInspectionDue: Date;
   notes?: string;
   aiAnalysis?: string;
+  imageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

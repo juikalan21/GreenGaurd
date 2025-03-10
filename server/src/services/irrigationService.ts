@@ -4,7 +4,7 @@ import { CropData } from '../models/CropData';
 import { SoilAnalysis } from '../models/SoilAnalysis';
 import { WeatherData } from '../models/WeatherData';
 import { aiService } from './aiService';
-import { notificationService } from './notificationService';
+//import { notificationService } from './notificationService';
 import mongoose from 'mongoose';
 
 interface WaterQuality {
@@ -86,7 +86,7 @@ export const irrigationService = {
       fertigation: this.mapFertigationItems(aiScheduleResult.fertigation)
     });
 
-    await this.notifyNewSchedule(userId, cropData.cropName, irrigationSchedule.userId);
+    //await this.notifyNewSchedule(userId, cropData.cropName, irrigationSchedule.userId);
     return irrigationSchedule;
   },
 
@@ -172,7 +172,7 @@ export const irrigationService = {
     irrigationSchedule.automationStatus = status;
     await irrigationSchedule.save();
     
-    await this.notifyAutomationStatus(userId, status, irrigationSchedule.userId);
+    //await this.notifyAutomationStatus(userId, status, irrigationSchedule.userId);
     return irrigationSchedule;
   },
 
@@ -224,19 +224,19 @@ export const irrigationService = {
     }));
   },
 
-  async notifyNewSchedule(userId: string, cropName: string, scheduleId: mongoose.Types.ObjectId) {
-    await notificationService.createNotification({
-      userId,
-      title: 'New Irrigation Schedule Generated',
-      message: `A new irrigation schedule has been created for your ${cropName}.`,
-      type: 'info',
-      category: 'irrigation',
-      priority: 'medium',
-      actionRequired: false,
-      relatedEntityType: 'irrigation',
-      relatedEntityId: scheduleId.toString(),
-    });
-  },
+  // async notifyNewSchedule(userId: string, cropName: string, scheduleId: mongoose.Types.ObjectId) {
+  //   await notificationService.createNotification({
+  //     userId,
+  //     title: 'New Irrigation Schedule Generated',
+  //     message: `A new irrigation schedule has been created for your ${cropName}.`,
+  //     type: 'info',
+  //     category: 'irrigation',
+  //     priority: 'medium',
+  //     actionRequired: false,
+  //     relatedEntityType: 'irrigation',
+  //     relatedEntityId: scheduleId.toString(),
+  //   });
+  // },
   
   async checkMoistureAndNotify(userId: string, schedule: IIrrigationSchedule, moistureLevel: number) {
     // Check if moisture level is too low or too high
@@ -250,54 +250,54 @@ export const irrigationService = {
       });
       
       // Send notification
-      await notificationService.createNotification({
-        userId,
-        title: 'Low Soil Moisture Alert',
-        message: 'Soil moisture level is critically low. Immediate irrigation recommended.',
-        type: 'alert',
-        category: 'irrigation',
-        priority: 'high',
-        actionRequired: true,
-        relatedEntityType: 'irrigation',
-        relatedEntityId: schedule.userId.toString(),
-      });
-    } else if (moistureLevel > 80) {
-      // Create alert in the schedule
-      schedule.alerts.push({
-        timestamp: new Date(),
-        type: AlertType.HIGH_MOISTURE,
-        message: 'Soil moisture too high. Risk of waterlogging.',
-        resolved: false
-      });
+    //   await notificationService.createNotification({
+    //     userId,
+    //     title: 'Low Soil Moisture Alert',
+    //     message: 'Soil moisture level is critically low. Immediate irrigation recommended.',
+    //     type: 'alert',
+    //     category: 'irrigation',
+    //     priority: 'high',
+    //     actionRequired: true,
+    //     relatedEntityType: 'irrigation',
+    //     relatedEntityId: schedule.userId.toString(),
+    //   });
+    // } else if (moistureLevel > 80) {
+    //   // Create alert in the schedule
+    //   schedule.alerts.push({
+    //     timestamp: new Date(),
+    //     type: AlertType.HIGH_MOISTURE,
+    //     message: 'Soil moisture too high. Risk of waterlogging.',
+    //     resolved: false
+    //   });
       
       // Send notification
-      await notificationService.createNotification({
-        userId,
-        title: 'High Soil Moisture Alert',
-        message: 'Soil moisture level is too high. Consider reducing irrigation.',
-        type: 'alert',
-        category: 'irrigation',
-        priority: 'medium',
-        actionRequired: true,
-        relatedEntityType: 'irrigation',
-        relatedEntityId: schedule.userId.toString(),
-      });
+      // await notificationService.createNotification({
+      //   userId,
+      //   title: 'High Soil Moisture Alert',
+      //   message: 'Soil moisture level is too high. Consider reducing irrigation.',
+      //   type: 'alert',
+      //   category: 'irrigation',
+      //   priority: 'medium',
+      //   actionRequired: true,
+      //   relatedEntityType: 'irrigation',
+      //   relatedEntityId: schedule.userId.toString(),
+      // });
     }
   },
   
-  async notifyAutomationStatus(userId: string, status: boolean, scheduleId: mongoose.Types.ObjectId) {
-    await notificationService.createNotification({
-      userId,
-      title: `Irrigation Automation ${status ? 'Enabled' : 'Disabled'}`,
-      message: `Automatic irrigation has been ${status ? 'enabled' : 'disabled'} for your field.`,
-      type: 'info',
-      category: 'irrigation',
-      priority: 'medium',
-      actionRequired: false,
-      relatedEntityType: 'irrigation',
-      relatedEntityId: scheduleId.toString(),
-    });
-  },
+  // async notifyAutomationStatus(userId: string, status: boolean, scheduleId: mongoose.Types.ObjectId) {
+  //   await notificationService.createNotification({
+  //     userId,
+  //     title: `Irrigation Automation ${status ? 'Enabled' : 'Disabled'}`,
+  //     message: `Automatic irrigation has been ${status ? 'enabled' : 'disabled'} for your field.`,
+  //     type: 'info',
+  //     category: 'irrigation',
+  //     priority: 'medium',
+  //     actionRequired: false,
+  //     relatedEntityType: 'irrigation',
+  //     relatedEntityId: scheduleId.toString(),
+  //   });
+  // },
   
   async checkWaterQualityAndNotify(userId: string, waterQuality: WaterQuality, scheduleId: mongoose.Types.ObjectId) {
     const issues = [];
@@ -314,19 +314,19 @@ export const irrigationService = {
       issues.push(`Contaminants detected: ${waterQuality.contaminants.join(', ')}`);
     }
     
-    if (issues.length > 0) {
-      await notificationService.createNotification({
-        userId,
-        title: 'Water Quality Issues Detected',
-        message: `Issues with irrigation water: ${issues.join('; ')}`,
-        type: 'alert',
-        category: 'irrigation',
-        priority: 'high',
-        actionRequired: true,
-        relatedEntityType: 'irrigation',
-        relatedEntityId: scheduleId.toString(),
-      });
-    }
+  //   if (issues.length > 0) {
+  //     await notificationService.createNotification({
+  //       userId,
+  //       title: 'Water Quality Issues Detected',
+  //       message: `Issues with irrigation water: ${issues.join('; ')}`,
+  //       type: 'alert',
+  //       category: 'irrigation',
+  //       priority: 'high',
+  //       actionRequired: true,
+  //       relatedEntityType: 'irrigation',
+  //       relatedEntityId: scheduleId.toString(),
+  //     });
+  //   }
   }
 };
 

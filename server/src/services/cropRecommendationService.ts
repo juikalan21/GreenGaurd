@@ -3,7 +3,7 @@ import { User } from '../models/User';
 import { SoilAnalysis } from '../models/SoilAnalysis';
 import { WeatherData } from '../models/WeatherData';
 import aiService from './aiService';
-import { notificationService } from './notificationService';
+//import { notificationService } from './notificationService';
 //import { analyzeImageWithAI } from './aiService';
 
 interface CropPreferences {
@@ -57,17 +57,17 @@ export const cropRecommendationService = {
       sustainabilityScore: aiRecommendationsResult.sustainabilityScore || 0,
     });
 
-    await notificationService.createNotification({
-      userId,
-      title: 'New Crop Recommendations Available',
-      message: 'AI-generated crop recommendations for your farm are now available.',
-      type: 'info',
-      category: 'crop',
-      priority: 'medium',
-      actionRequired: false,
-      relatedEntityType: 'crop',
-      relatedEntityId: cropRecommendation.userId.toString()
-    });
+    // await notificationService.createNotification({
+    //   userId,
+    //   title: 'New Crop Recommendations Available',
+    //   message: 'AI-generated crop recommendations for your farm are now available.',
+    //   type: 'info',
+    //   category: 'crop',
+    //   priority: 'medium',
+    //   actionRequired: false,
+    //   relatedEntityType: 'crop',
+    //   relatedEntityId: cropRecommendation.userId.toString()
+    // });
 
     return cropRecommendation;
   },

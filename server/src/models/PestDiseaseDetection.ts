@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-// Basic Enums
-enum DetectionType {
+// Basic Enums - exported for use in services
+export enum DetectionType {
   PEST = 'pest',
   DISEASE = 'disease',
   NUTRIENT_DEFICIENCY = 'nutrient_deficiency',
@@ -9,19 +9,25 @@ enum DetectionType {
   OTHER = 'other'
 }
 
-enum Severity {
+export enum Severity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
   CRITICAL = 'critical'
 }
 
-enum TreatmentType {
+export enum TreatmentType {
   CHEMICAL = 'chemical',
   BIOLOGICAL = 'biological',
   CULTURAL = 'cultural',
   MECHANICAL = 'mechanical',
   INTEGRATED = 'integrated'
+}
+
+export enum DetectionStatus {
+  DETECTED = 'detected',
+  IN_TREATMENT = 'in_treatment',
+  RESOLVED = 'resolved'
 }
 
 // Main Interface
@@ -32,10 +38,10 @@ export interface IPestDiseaseDetection extends Document {
   location: {
     coordinates: number[];
   };
-  images: {
+  images: Array<{
     original: string;
     processed?: string;
-  }[];
+  }>;
   detectionType: DetectionType;
   detectionResult: {
     name: string;
@@ -58,7 +64,7 @@ export interface IPestDiseaseDetection extends Document {
     preventive: string[];
   };
   status: {
-    current: 'detected' | 'in_treatment' | 'resolved';
+    current: DetectionStatus;
     history: Array<{
       status: string;
       date: Date;
@@ -69,6 +75,9 @@ export interface IPestDiseaseDetection extends Document {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Methods
+  markResolved(resolutionMethod?: string): Promise<void>;
 }
 
 // Schema
@@ -125,8 +134,8 @@ const PestDiseaseDetectionSchema = new Schema({
   status: {
     current: {
       type: String,
-      enum: ['detected', 'in_treatment', 'resolved'],
-      default: 'detected'
+      enum: Object.values(DetectionStatus),
+      default: DetectionStatus.DETECTED
     },
     history: [{
       status: String,
@@ -146,12 +155,27 @@ const PestDiseaseDetectionSchema = new Schema({
 // Basic Indexes
 PestDiseaseDetectionSchema.index({ farmId: 1, 'detectionResult.identifiedAt': -1 });
 PestDiseaseDetectionSchema.index({ resolved: 1 });
+PestDiseaseDetectionSchema.index({ userId: 1, farmId: 1 });
+PestDiseaseDetectionSchema.index({ cropId: 1 });
+PestDiseaseDetectionSchema.index({ 'detectionResult.severity': 1 });
 
 // Essential Methods
-PestDiseaseDetectionSchema.methods.markResolved = async function() {
+PestDiseaseDetectionSchema.methods.markResolved = async function(resolutionMethod?: string): Promise<void> {
   this.resolved = true;
   this.resolvedAt = new Date();
-  this.status.current = 'resolved';
+  this.status.current = DetectionStatus.RESOLVED;
+  
+  if (resolutionMethod) {
+    this.notes = this.notes 
+      ? `${this.notes}\nResolution method: ${resolutionMethod}` 
+      : `Resolution method: ${resolutionMethod}`;
+  }
+  
+  this.status.history.push({
+    status: DetectionStatus.RESOLVED,
+    date: new Date()
+  });
+  
   await this.save();
 };
 
