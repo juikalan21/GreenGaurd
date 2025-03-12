@@ -1,7 +1,7 @@
 // src/services/smsService.ts
 import axios from 'axios';
 import { env } from '../config/env';
-import logger from '../config/logger';
+import { info } from 'console';
 
 /**
  * Service for sending SMS messages, particularly OTPs
@@ -18,8 +18,8 @@ export const smsService = {
       // For hackathon purposes, we'll use console.log instead of a real SMS gateway
       // In a production environment, you would integrate with an SMS provider API
       
-      logger.info(`[SMS SERVICE] Sending OTP: ${otp} to phone: ${phone}`);
       
+      info(`[SMS SERVICE] Sending OTP:${otp} SMS to phone: ${phone}`);
       // Mock implementation for development/hackathon
       if (env.NODE_ENV === 'production') {
         // In production, we would use a real SMS gateway
@@ -42,7 +42,7 @@ export const smsService = {
         return true;
       }
     } catch (error) {
-      logger.error(`Send OTP SMS error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      Error(`Send OTP SMS error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return false;
     }
   },
@@ -55,7 +55,7 @@ export const smsService = {
    */
   async sendNotificationSms(phone: string, message: string): Promise<boolean> {
     try {
-      logger.info(`[SMS SERVICE] Sending SMS to phone: ${phone}`);
+      info(`[SMS SERVICE] Sending notification SMS to phone: ${phone}`);
       
       // Mock implementation for development/hackathon
       if (env.NODE_ENV === 'production') {
@@ -67,7 +67,7 @@ export const smsService = {
         return true;
       }
     } catch (error) {
-      logger.error(`Send notification SMS error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      Error(`Send notification SMS error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return false;
     }
   }
