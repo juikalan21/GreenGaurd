@@ -3,6 +3,7 @@ import { User, IUser } from '../models/User';
 import {OTPPurpose, OTP,OTPType } from '../models/OTP';
 import { generateToken, verifyToken } from '../utils/tokenGenerator';
 import type { TokenPayload } from '../types/types';
+import { string } from 'joi';
 
 interface RegisterInput {
   name: string;

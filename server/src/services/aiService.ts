@@ -315,7 +315,6 @@ export const aiService = {
       throw error;
     }
   },
-  
 };
 
 export default aiService;
